@@ -32,7 +32,7 @@ def get_args():
 	##########################################
 	#PLEASE ADD YOUR TEAM NAME#
 	##########################################
-	name = "Sample_Player"
+	name = "Sunflower"
 	##########################################
 	#PLEASE ADD YOUR TEAM NAME#
 	##########################################
@@ -118,6 +118,11 @@ class Player:
 		#
 
 		# pick 5 random dancers from dancers
+
+
+		import pdb; pdb.set_trace()
+
+
 		moves = []
 		occupied = set()
 		for id in self.dancers:
