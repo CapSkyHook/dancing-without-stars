@@ -3,6 +3,9 @@ import sys, random
 from copy import deepcopy
 from client import Client
 from getopt import getopt, GetoptError
+import heapq 
+from sklearn.neighbors import DistanceMetric
+from sklearn.metrics.pairwise import pairwise_distances
 
 """
 python3 sample_player.py -H <host> -p <port> <-c|-s>
@@ -75,6 +78,10 @@ class Player:
 		# where (x,y) is initial position of dancer
 		# c is the color id of the dancer
 		self.dancers = dancers
+		self.dist = DistanceMetric.get_metric('manhattan')
+        # arr_patients = [ [patient[0], patient[1]] for dancier in self.danciers.values()]
+
+        # D = pairwise_distances(arr_patients, metric='manhattan')
 
 	# TODO add your method here
 	# Add your stars as a spoiler
@@ -108,6 +115,13 @@ class Player:
 
 	# TODO add your method here
 	# Add your moves as a choreographer
+
+	def return_and_delete_middle_elem(self, arr):
+		mid_point = len(arr) // 2
+		return_elem = arr[mid_point]
+		del arr[mid_point]
+		return return_elem
+
 	def get_moves(self, stars):
 		#
 		#
@@ -120,38 +134,54 @@ class Player:
 		# pick 5 random dancers from dancers
 
 
+		dancerPriorityQueues = {}
+			# import pdb; pdb.set_trace()
+		for centerId in range(self.dancers[[*self.dancers][-1]][2] + 1):
+			dancerPriorityQueues[centerId] = [[]] * (self.dancers[[*self.dancers][-1]][2] + 1)
+			# for targetId in range(self.dancers[[*self.dancers][-1]][2] + 1):
+				# dancerPriorityQueues[dancerCenter[2]].append([])
+
+		for centerDancerID, dancerCenter in self.dancers.items():
+
+			for outerDancerID, dancerOuter in self.dancers.items():
+				if dancerCenter[2] == dancerOuter[2]: continue
+				# import pdb; pdb.set_trace()
+				distance = self.dist.pairwise([[dancerCenter[0], dancerCenter[1]], [dancerOuter[0], dancerOuter[1]]])[0][1]
+				try:
+					dancerPriorityQueues[dancerCenter[2]][dancerOuter[2]].append(( centerDancerID, outerDancerID, distance))
+				except Exception as e:
+					import pdb; pdb.set_trace()
+		# import pdb; pdb.set_trace()
+		num_groups = int(len(self.dancers)/self.dancers[[*self.dancers][-1]][2])
+		final_clusters = [{i : None for i in range(1, self.dancers[[*self.dancers][-1]][2] + 1)}] * num_groups
+
+		# import pdb; pdb.set_trace()
+		num_types_dancers = self.dancers[[*self.dancers][-1]][2]
+		
+		# this needs to be changed so we instead calculate the 
+		for centerId in range(1, num_types_dancers + 1):
+			clusters = {}
+			usedCenters = set()
+			usedTargetIDs = set()
+			for targetId in range(1, num_types_dancers + 1):
+				if centerId == targetId: continue
+				sortedItems = sorted(dancerPriorityQueues[centerId][targetId], key=lambda x: x[2])
+				print(targetId)
+				while len(usedCenters) < num_groups:
+					middle_elem = self.return_and_delete_middle_elem(sortedItems)
+					if middle_elem[0] not in usedCenters and middle_elem[1] not in usedTargetIDs:
+						if middle_elem[0] not in clusters:
+							clusters[middle_elem[0]] = {}
+						clusters[middle_elem[0]][targetId] = middle_elem[1]
+						usedCenters.add(middle_elem[0])
+						usedTargetIDs.add(middle_elem[1])
+
+					# get middle element, if it's not in used centers and used target id's then put it in the cluster.
+			import pdb; pdb.set_trace()
+		# Now I have to get the best cluster and put them in.
+
+
 		import pdb; pdb.set_trace()
-
-
-		moves = []
-		occupied = set()
-		for id in self.dancers:
-			occupied.add((self.dancers[id][0], self.dancers[id][1]))
-		for star in stars:
-			occupied.add(star)
-		for i in range(100): # do 20 turns, each turn pick 5 random dancers
-			move = {}
-			count = 0
-			while count < 5:
-				# pick random dancers
-				picked = random.sample(self.dancers.keys(), 5 - count)
-				for id in picked:
-					x, y, color = self.dancers[id]
-					if id in move:
-						continue
-					c = random.sample([(1, 0), (-1, 0), (0, 1), (0, -1)], 1)[0]
-					x2 = x + c[0]
-					y2 = y + c[1]
-					if (x2, y2) in occupied:
-						continue
-					if x2 not in range(self.board_size) or y2 not in range(self.board_size):
-						continue
-					move[id] = (x2, y2)
-					self.dancers[id] = ((x2, y2, self.dancers[id][2]))
-					occupied.remove((x, y))
-					occupied.add((x2, y2))
-					count += 1
-			moves.append(move)
 		return moves
 
 def main():
@@ -165,7 +195,7 @@ def main():
 	parameters_l = parameters.split()
 	board_size = int(parameters_l[0])
 	num_color = int(parameters_l[1])
-	k = int(parameters_l[2]) # max num of stars
+	k = int(parameters_l[2]) # max num of stars\\\\\\\
 	# receive file data
 	file_data = client.receive()
 	# process file

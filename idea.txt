@@ -1,0 +1,41 @@
+mark each dancer with unique identifier
+each dancer has k - 1 priority queues
+
+for each dancer:
+	for each dancer not this one:
+		filter pound signs by if they are between the two dancers
+		calculate manhatten distance + 2.0 if pound sign is there, store in priority queue for that number of that dancer
+
+
+dancer's cluster n/k arrays of arrays with k + 1 spots where first number is distance score
+
+for the dancer number that has the lowest avg distance in the combination of it's first 2 values in it's priority queue for all numbers (so we look for centrally located numbers):
+
+	set values in cluster
+
+	for each other dancer number
+		while all values not equal to none:
+			pop all from the priority queue for each of that number, if there conflicting ones then assign it to the one that has the highest average
+
+
+
+
+
+a score is defined by the longest path. such that we actually want to have the shortest possible paths
+
+so what if looking at 
+
+
+optimize them longest back
+
+sort the array and work middle out for all of them
+
+
+[{1: None, 2: None, 3: None, 4: None, 5: None}] * int(len(self.dancers)/self.dancers[[*self.dancers][-1]][2])
+
+
+>>> from numpy import array
+>>> data = array([[3,7,2],[1,4,5],[9,8,7]])  
+>>> from numpy import sum
+>>> sum(data, 1)
+array([12, 10, 24])
