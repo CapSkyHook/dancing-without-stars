@@ -145,15 +145,19 @@ class Player:
 
 			for outerDancerID, dancerOuter in self.dancers.items():
 				if dancerCenter[2] == dancerOuter[2]: continue
-				# import pdb; pdb.set_trace()
 				distance = self.dist.pairwise([[dancerCenter[0], dancerCenter[1]], [dancerOuter[0], dancerOuter[1]]])[0][1]
-				try:
-					dancerPriorityQueues[dancerCenter[2]][dancerOuter[2]].append(( centerDancerID, outerDancerID, distance))
-				except Exception as e:
-					import pdb; pdb.set_trace()
+				
+				
+				# try:
+				import pdb; pdb.set_trace()
+				dancerPriorityQueues[dancerCenter[2]][dancerOuter[2]].append(( centerDancerID, outerDancerID, distance))
+				# except Exception as e:
+				# 	import pdb; pdb.set_trace()
+				import pdb; pdb.set_trace()
 		# import pdb; pdb.set_trace()
 		num_groups = int(len(self.dancers)/self.dancers[[*self.dancers][-1]][2])
 		final_clusters = [{i : None for i in range(1, self.dancers[[*self.dancers][-1]][2] + 1)}] * num_groups
+		final_cluster_dist = 1000000
 
 		# import pdb; pdb.set_trace()
 		num_types_dancers = self.dancers[[*self.dancers][-1]][2]
@@ -163,21 +167,34 @@ class Player:
 			clusters = {}
 			usedCenters = set()
 			usedTargetIDs = set()
+			total_traveled_distance = 0
 			for targetId in range(1, num_types_dancers + 1):
+				usedCenters = set()
+				usedTargetIDs = set()
 				if centerId == targetId: continue
 				sortedItems = sorted(dancerPriorityQueues[centerId][targetId], key=lambda x: x[2])
-				print(targetId)
+				print("Target Id: ", targetId)
 				while len(usedCenters) < num_groups:
+					print(len(usedCenters))
 					middle_elem = self.return_and_delete_middle_elem(sortedItems)
 					if middle_elem[0] not in usedCenters and middle_elem[1] not in usedTargetIDs:
 						if middle_elem[0] not in clusters:
 							clusters[middle_elem[0]] = {}
+							clusters[middle_elem[0]][centerId] = middle_elem[0]
+						import pdb; pdb.set_trace()
 						clusters[middle_elem[0]][targetId] = middle_elem[1]
 						usedCenters.add(middle_elem[0])
 						usedTargetIDs.add(middle_elem[1])
+						total_traveled_distance += middle_elem[2]	
+			import pdb; pdb.set_trace()
+			avg_dist = total_traveled_distance / len(self.dancers)
+			if avg_dist < final_cluster_dist:
+				final_clusters = clusters
+				final_cluster_dist = avg_dist
+
 
 					# get middle element, if it's not in used centers and used target id's then put it in the cluster.
-			import pdb; pdb.set_trace()
+			# import pdb; pdb.set_trace()
 		# Now I have to get the best cluster and put them in.
 
 
