@@ -6,6 +6,7 @@ from getopt import getopt, GetoptError
 import heapq 
 from sklearn.neighbors import DistanceMetric
 from sklearn.metrics.pairwise import pairwise_distances
+from operator import itemgetter
 
 """
 python3 sample_player.py -H <host> -p <port> <-c|-s>
@@ -134,6 +135,35 @@ class Player:
 		# pick 5 random dancers from dancers
 
 
+		clusters = self.get_clusters(stars)
+		# newlist = sorted(list_to_be_sorted, key=itemgetter('name')) 
+		import pdb; pdb.set_trace()
+		return move
+
+	def within(self, centerPoint, obstacle, targetPoint):
+		return centerPoint <= obstacle <= targetPoint or targetPoint <= obstacle <= centerPoint
+
+
+	# Idea here is that when we are looking to place a new cluster around a point to make sure that the point has enough space around it to have a whole line of points
+	def mark_space(self, centerPoint, grid):
+		top = 0
+		bottom = 0
+		left = 0
+		right = 0
+		vertically_placed = False
+		horizontally_placed = False
+		# Look both horizontally and vertically and find most centered one
+		for i in range(2): 
+			need_to_place = self.k - 1
+			if i == 0: # horizontal
+				leftOffset = 0
+				while (need_to_place > 0):
+					# Maybe make an array of the two directions and just keep checking if they are free. Like calculate how many spaces are free up till k on each side then take min k // 2 and min of both sides then take remaining space unless there isn't enough then return False
+			elif i == 1: # vertical
+		return True
+
+
+	def get_clusters(self, stars):
 		dancerPriorityQueues = {}
 		for centerId in range(self.dancers[[*self.dancers][-1]][2] + 1):
 			dancerPriorityQueues[centerId] = [[] for _ in range((self.dancers[[*self.dancers][-1]][2] + 1))]
@@ -143,7 +173,15 @@ class Player:
 			for outerDancerID, dancerOuter in self.dancers.items():
 				if dancerCenter[2] == dancerOuter[2]: continue
 				distance = self.dist.pairwise([[dancerCenter[0], dancerCenter[1]], [dancerOuter[0], dancerOuter[1]]])[0][1]
-				
+				obstacle = 0
+				for star in stars:
+					if self.within((dancerCenter[0], dancerCenter[1]), star, (dancerOuter[0], dancerOuter[1])):
+						distance += 2 # Penalty to account for star
+						obstacle += 1
+						# import pdb; pdb.set_trace()
+				# print("Length of stars: ", len(stars))
+				# print("Num Obstacles: ", obstacle)
+
 				dancerPriorityQueues[dancerCenter[2]][dancerOuter[2]].append(( centerDancerID, outerDancerID, distance))
 		num_groups = int(len(self.dancers)/self.dancers[[*self.dancers][-1]][2])
 		final_clusters = None 
@@ -157,33 +195,38 @@ class Player:
 			usedCenters = set()
 			usedTargetIDs = set()
 			total_traveled_distance = 0
+			grid = [[0 for _ in range(self.board_size)] for _ in range(self.board_size)]
+			for star in stars:
+				grid[star[0]][star[1]] = -1
+			import pdb; pdb.set_trace()
 			for targetId in range(1, num_types_dancers + 1):
 				usedCenters = set()
 				usedTargetIDs = set()
 				if centerId == targetId: continue
 				sortedItems = sorted(dancerPriorityQueues[centerId][targetId], key=lambda x: x[2])
-				print("Target Id: ", targetId)
-				while len(usedCenters) < num_groups:
-					print(len(usedCenters))
+				while len(usedCenters) < num_groups && sortedItems:
 					middle_elem = self.return_and_delete_middle_elem(sortedItems)
 					if middle_elem[0] not in usedCenters and middle_elem[1] not in usedTargetIDs:
+						if not self.mark_space(middle_elem, grid):
+							continue
 						if middle_elem[0] not in clusters:
 							clusters[middle_elem[0]] = {}
 							clusters[middle_elem[0]][centerId] = middle_elem[0]
+							clusters[middle_elem[0]]["distance"] = 0
 
 						clusters[middle_elem[0]][targetId] = middle_elem[1]
 						usedCenters.add(middle_elem[0])
 						usedTargetIDs.add(middle_elem[1])
+						clusters[middle_elem[0]]["distance"] += middle_elem[2]	
 						total_traveled_distance += middle_elem[2]	
+				if not sortedItems and len(usedCenters) < num_groups:
+					total_traveled_distance += 99999999999
+					break
 			avg_dist = total_traveled_distance / len(self.dancers)
 			if avg_dist < final_cluster_dist:
 				final_clusters = clusters
 				final_cluster_dist = avg_dist
-
-
-		import pdb; pdb.set_trace()
-		return moves
-
+		return final_clusters
 def main():
 	host, port, p, name = get_args()
 	# create client
