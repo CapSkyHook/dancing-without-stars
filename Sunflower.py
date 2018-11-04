@@ -80,6 +80,7 @@ class Player:
 		# c is the color id of the dancer
 		self.dancers = dancers
 		self.dist = DistanceMetric.get_metric('manhattan')
+		self.directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         # arr_patients = [ [patient[0], patient[1]] for dancier in self.danciers.values()]
 
         # D = pairwise_distances(arr_patients, metric='manhattan')
@@ -131,37 +132,94 @@ class Player:
 		# with value as a tuple of 2 values (x, y) representing the new position of the dancer
 		#
 		#
-
-		# pick 5 random dancers from dancers
-
-
-		clusters = self.get_clusters(stars)
-		# newlist = sorted(list_to_be_sorted, key=itemgetter('name')) 
+		clusters, centers = self.get_clusters(stars)
+		end_coordinates, board = self.place_clusters(clusters, stars, centers)
+		move = self.route(self.dancers, end_coordinates, board)
 		import pdb; pdb.set_trace()
 		return move
 
+
+	def place_clusters(self, clusters, stars, centers):
+		centerType = self.dancers[centers[1]][2]
+		board = self.set_up_board(stars, clusters, centerType)
+		clusters_by_distance = sorted(list(clusters.values()), key=itemgetter('distance'), reverse=True) 
+		final_poses = {}
+		for cluster in clusters_by_distance:
+			center = cluster[centerType][0]
+			best_balance = self.k
+			best_positions = {}
+			found_one = False
+			for direction in range(2):
+				for one_side in range(self.num_color):
+					other_side = self.num_color - 1 - one_side
+
+					valid_pos, poses = self.place_cluster(board, one_side, other_side, direction, self.dancers[center])
+					potential_balance = abs(one_side - other_side)
+					if valid_pos:
+						if found_one and potential_balance >= best_balance:
+							break
+						found_one = True
+						best_balance = potential_balance
+						for key, value in cluster.items():
+							if key == "distance": continue
+
+							if centerType == self.dancers[value[0]][2]:
+								# we might want to pass the id of the thing
+								best_positions[value[0]] = (self.dancers[value[0]][0], self.dancers[value[0]][1])
+							else:
+								best_positions[value[0]] = poses.pop()
+
+			final_poses[center] = best_positions
+			for key, position in best_positions.items():
+				if key != center:
+					board[position[0]][position[1]] = key
+		return final_poses, board
+
+	def route(self, dancers, end_coordinates, board):
+		curr_poses = {}
+		for dancerId, (x, y, colorType) in dancers.items():
+			curr_poses[dancerId] = [x, y]
+			board[x][y] = dancerId
+		
+		# STILL WORK IN PROGRESS. ROUTING PORTION
+		import pdb; pdb.set_trace()
+
+		# for 
+
+
+	def place_cluster(self, board, one_side, other_side, direction, center):
+		poses = []
+		if direction == 0: # horizontal
+			for i in range(1, one_side + 1):
+				test_pos = (center[0] + i, center[1])
+				try:
+					if (test_pos[0] >= self.board_size or test_pos[1] >= self.board_size) or board[test_pos[0]][test_pos[1]] != 0:
+						return False, []
+				except:
+					import pdb; pdb.set_trace()
+				poses.append(test_pos)
+
+			for i in range(1, other_side + 1):
+				test_pos = (center[0] - i, center[1])
+				if test_pos[0] < 0 or test_pos[1] < 0 or board[test_pos[0]][test_pos[1]] != 0:
+					return False, []
+				poses.append(test_pos)
+		else: # vertical
+			for i in range(1, one_side + 1):
+				test_pos = (center[0], center[1] + i)
+				if test_pos[0] >= self.board_size or test_pos[1] >= self.board_size or board[test_pos[0]][test_pos[1]] != 0:
+					return False, []
+				poses.append(test_pos)
+
+			for i in range(1, other_side + 1):
+				test_pos = (center[0], center[1] - i)
+				if test_pos[0] < 0 or test_pos[1] < 0 or board[test_pos[0]][test_pos[1]] != 0:
+					return False, []
+				poses.append(test_pos)
+		return True, poses
+
 	def within(self, centerPoint, obstacle, targetPoint):
 		return centerPoint <= obstacle <= targetPoint or targetPoint <= obstacle <= centerPoint
-
-
-	# Idea here is that when we are looking to place a new cluster around a point to make sure that the point has enough space around it to have a whole line of points
-	def mark_space(self, centerPoint, grid):
-		top = 0
-		bottom = 0
-		left = 0
-		right = 0
-		vertically_placed = False
-		horizontally_placed = False
-		# Look both horizontally and vertically and find most centered one
-		for i in range(2): 
-			need_to_place = self.k - 1
-			if i == 0: # horizontal
-				leftOffset = 0
-				while (need_to_place > 0):
-					# Maybe make an array of the two directions and just keep checking if they are free. Like calculate how many spaces are free up till k on each side then take min k // 2 and min of both sides then take remaining space unless there isn't enough then return False
-			elif i == 1: # vertical
-		return True
-
 
 	def get_clusters(self, stars):
 		dancerPriorityQueues = {}
@@ -169,7 +227,6 @@ class Player:
 			dancerPriorityQueues[centerId] = [[] for _ in range((self.dancers[[*self.dancers][-1]][2] + 1))]
 
 		for centerDancerID, dancerCenter in self.dancers.items():
-
 			for outerDancerID, dancerOuter in self.dancers.items():
 				if dancerCenter[2] == dancerOuter[2]: continue
 				distance = self.dist.pairwise([[dancerCenter[0], dancerCenter[1]], [dancerOuter[0], dancerOuter[1]]])[0][1]
@@ -178,13 +235,12 @@ class Player:
 					if self.within((dancerCenter[0], dancerCenter[1]), star, (dancerOuter[0], dancerOuter[1])):
 						distance += 2 # Penalty to account for star
 						obstacle += 1
-						# import pdb; pdb.set_trace()
-				# print("Length of stars: ", len(stars))
-				# print("Num Obstacles: ", obstacle)
 
 				dancerPriorityQueues[dancerCenter[2]][dancerOuter[2]].append(( centerDancerID, outerDancerID, distance))
 		num_groups = int(len(self.dancers)/self.dancers[[*self.dancers][-1]][2])
 		final_clusters = None 
+		final_moves = None
+		final_centers = None
 		final_cluster_dist = 1000000
 
 		num_types_dancers = self.dancers[[*self.dancers][-1]][2]
@@ -192,29 +248,29 @@ class Player:
 		# this needs to be changed so we instead calculate the 
 		for centerId in range(1, num_types_dancers + 1):
 			clusters = {}
+			centers = {}
 			usedCenters = set()
 			usedTargetIDs = set()
 			total_traveled_distance = 0
-			grid = [[0 for _ in range(self.board_size)] for _ in range(self.board_size)]
-			for star in stars:
-				grid[star[0]][star[1]] = -1
-			import pdb; pdb.set_trace()
+			
 			for targetId in range(1, num_types_dancers + 1):
 				usedCenters = set()
 				usedTargetIDs = set()
 				if centerId == targetId: continue
 				sortedItems = sorted(dancerPriorityQueues[centerId][targetId], key=lambda x: x[2])
-				while len(usedCenters) < num_groups && sortedItems:
+				while len(usedCenters) < num_groups and sortedItems:
 					middle_elem = self.return_and_delete_middle_elem(sortedItems)
 					if middle_elem[0] not in usedCenters and middle_elem[1] not in usedTargetIDs:
-						if not self.mark_space(middle_elem, grid):
-							continue
+						# if not self.mark_space(middle_elem, grid):
+						# 	continue
 						if middle_elem[0] not in clusters:
 							clusters[middle_elem[0]] = {}
-							clusters[middle_elem[0]][centerId] = middle_elem[0]
+							clusters[middle_elem[0]][centerId] = [middle_elem[0], 0]
 							clusters[middle_elem[0]]["distance"] = 0
+							centers[middle_elem[0]] = middle_elem[0]
 
-						clusters[middle_elem[0]][targetId] = middle_elem[1]
+						clusters[middle_elem[0]][targetId] = [middle_elem[1], middle_elem[2]]
+						centers[middle_elem[1]] = middle_elem[0]
 						usedCenters.add(middle_elem[0])
 						usedTargetIDs.add(middle_elem[1])
 						clusters[middle_elem[0]]["distance"] += middle_elem[2]	
@@ -223,10 +279,32 @@ class Player:
 					total_traveled_distance += 99999999999
 					break
 			avg_dist = total_traveled_distance / len(self.dancers)
+
 			if avg_dist < final_cluster_dist:
 				final_clusters = clusters
 				final_cluster_dist = avg_dist
-		return final_clusters
+				final_centers = centers
+		return final_clusters, final_centers
+
+	def set_up_board(self, stars, clusters, centerType):
+		board = [[0 for i in range(self.board_size)] for j in range(self.board_size)]
+
+		for star in stars:
+			# import pdb; pdb.set_trace()
+
+			board[star[0]][star[1]] = -1
+
+		for cluster in clusters:
+			x, y, color = self.dancers[cluster]
+			if color == centerType:
+				board[x][y] = -2 
+			# board[x][y] = -2 if color == centerType else cluster
+
+
+		return board
+
+
+
 def main():
 	host, port, p, name = get_args()
 	# create client
