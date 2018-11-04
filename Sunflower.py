@@ -197,11 +197,8 @@ class Player:
 		if direction == 0: # horizontal
 			for i in range(1, one_side + 1):
 				test_pos = (center[0] + i, center[1])
-				try:
-					if (test_pos[0] >= self.board_size or test_pos[1] >= self.board_size) or board[test_pos[0]][test_pos[1]] != 0:
-						return False, []
-				except:
-					import pdb; pdb.set_trace()
+				if (test_pos[0] >= self.board_size or test_pos[1] >= self.board_size) or board[test_pos[0]][test_pos[1]] != 0:
+					return False, []
 				poses.append(test_pos)
 
 			for i in range(1, other_side + 1):
@@ -295,17 +292,12 @@ class Player:
 		board = [[0 for i in range(self.board_size)] for j in range(self.board_size)]
 
 		for star in stars:
-			# import pdb; pdb.set_trace()
-
 			board[star[0]][star[1]] = -1
 
 		for cluster in clusters:
 			x, y, color = self.dancers[cluster]
 			if color == centerType:
 				board[x][y] = -2 
-			# board[x][y] = -2 if color == centerType else cluster
-
-
 		return board
 
 
