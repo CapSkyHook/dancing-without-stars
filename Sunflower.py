@@ -239,11 +239,12 @@ class Player:
 					board = oriboard
 					moves_this_turn[it] = bfs.pop()
 					for dancerId in range(it+1, int(len(self.dancers))):
-						curr_pos = curr_poses[dancerId]
-				  try:
+					 curr_pos = curr_poses[dancerId]
+					 end_pos = end_coordinates[dancerId]
+				  '''try:
 					  end_pos = end_coordinates[dancerId]
 				  except Exception as e:
-					  import pdb; pdb.set_trace()
+					  import pdb; pdb.set_trace()'''
 
 				  valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
 
