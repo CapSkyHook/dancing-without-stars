@@ -263,7 +263,7 @@ class Player:
 						if len(moves_this_turn) > len(best_move):
 							best_move = moves_this_turn
 
-					it += 1
+				it += 1
 			 move.append(best_move)
 
 		return moves
