@@ -397,12 +397,10 @@ class Game(object):
 
 		# now execute the moves
 		print("executing the moves...")
-		turn = 0
 		for m in steps:
 			move_success, msg = self.__update_dancers(m)
 			if not move_success:
 				print(msg) # invalid move
-				print("Turn: ", turn)
 				update_state(self.board_size, self.num_color, self.choreographer, \
 					self.spoiler, msg, self.get_board(), False)
 				sys.exit()
@@ -410,7 +408,6 @@ class Game(object):
 				update_state(self.board_size, self.num_color, self.choreographer, \
 					self.spoiler, "executing the moves...", self.get_board(), False)
 				time.sleep(0.5)
-			turn += 1
 
 		# parse line_info
 		li_l = line_info.split()
