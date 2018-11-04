@@ -245,23 +245,23 @@ class Player:
 				 except Exception as e:
 					 import pdb; pdb.set_trace()
 
-				 valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
+				  valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
 
-				 for i in range(len(valid_moves)):
-					 if board[valid_moves[i][0]][valid_moves[i][1]] == 0:
-						 board[curr_pos[0]][curr_pos[1]] = 0
-						 board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
-						 curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
+				  for i in range(len(valid_moves)):
+					  if board[valid_moves[i][0]][valid_moves[i][1]] == 0:
+						  board[curr_pos[0]][curr_pos[1]] = 0
+						  board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
+						  curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
 
 						# dumb but this needs to come last because I am popping out the coordinate
-						 moves_this_turn[dancerId] = valid_moves[i]
+						  moves_this_turn[dancerId] = valid_moves[i]
 						 #curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
 						#bfs.append(valid_moves)
 						#for one loop of move_this_turn, once we find a valid move for one dancer, we go to next(not sure here)
-						 break
+						  break
 
 						if len(moves_this_turn) > len(best_move):
-							best_move = moves_this_turn
+						 best_move = moves_this_turn
 
 				it += 1
 			 move.append(best_move)

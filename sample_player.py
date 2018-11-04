@@ -85,7 +85,8 @@ class Player:
 		# Each coordinate is a tuple of 2 values (x, y)
 		#
 		#
-		stars = []
+		dancers = self.dancers.copy()
+		stars = self.adjPlaceStars(dancers)
 		x = -1
 		y = -1
 		occupied = set()
@@ -106,6 +107,34 @@ class Player:
 					occupied.add((x, y))
 		return stars
 
+ def adjPlaceStars(self, dancers) {
+  int boardSize = self.board_size
+  int numDancers = len(dancers)
+  int numColors = client->serverNumColors;
+  int numStars = numDancers; // because the rule says so
+
+  vector<Point> stars; // stars is initially empty
+  GameState state(boardSize, numColors, client->dancers, stars, &t);
+  vector<PointScore> candidates = getAdjCandidates(state);
+
+  int i = 0;
+  while (stars.size() < numStars && i < candidates.size()) {
+    Point candidateStar = candidates[i].point;
+    bool tooClose = false;
+    for (Point &star : stars) {
+      if (manDist(candidateStar, star) < numColors + 1) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (!tooClose) {
+      stars.push_back(candidateStar);
+    }
+    i++;
+  }
+
+  return stars;
+}
 	# TODO add your method here
 	# Add your moves as a choreographer
 	def get_moves(self, stars):
