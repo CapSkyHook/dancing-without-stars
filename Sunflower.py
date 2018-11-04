@@ -133,7 +133,11 @@ class Player:
 		#
 		#
 		clusters, centers = self.get_clusters(stars)
+		print("Got clusters")
 		end_coordinates, board = self.place_clusters(clusters, stars, centers)
+		print("Got end_coordinates")
+
+		# CURRENT THIS PLATEAUS AT 42 PEOPLE SO NEED TO DO A LITTLE MORE
 		move = self.route(self.dancers, end_coordinates, board)
 		import pdb; pdb.set_trace()
 		return move
@@ -176,19 +180,67 @@ class Player:
 
 	def route(self, dancers, end_coordinates, board):
 		curr_poses = {}
+		moves = []
 		positions = {}
 		for dancerId, (x, y, colorType) in dancers.items():
 			curr_poses[dancerId] = [x, y]
 			board[x][y] = dancerId
 		
-		import pdb; pdb.set_trace()
-
+		# import pdb; pdb.set_trace()
+		turn_round = 0
 		while not self.finished(curr_poses, end_coordinates):
-			for dancerId, (x, y, colorType) in dancers.items():
-				pass
+			# import pdb; pdb.set_trace()
+			curr_turn_other_viable_moves = {}
+			moves_this_turn = {}
+			for dancerId in self.dancers.keys():
+				if dancerId in moves_this_turn: continue
+				curr_pos = curr_poses[dancerId]
+				try:
+					end_pos = end_coordinates[dancerId]
+				except Exception as e:
+					import pdb; pdb.set_trace()
+
+				valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
+
+				for i in range(len(valid_moves)):
+					if board[valid_moves[i][0]][valid_moves[i][1]] == 0:
+						board[curr_pos[0]][curr_pos[1]] = 0
+						board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
+						curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
+
+						# dumb but this needs to come last because I am popping out the coordinate
+						moves_this_turn[dancerId] = valid_moves.pop(i)
+						curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
+						break
+					
+			moves.append(moves_this_turn)
+			turn_round += 1
+		return moves
+
+
+	def find_viable_moves(self, curr_pos, end_pos, board):
+		valid_poses = []
+		for direction in self.directions:
+			new_pos = (curr_pos[0] + direction[0], curr_pos[1] + direction[1])
+			if self.is_closer(curr_pos, new_pos, end_pos):
+				valid_poses.append(new_pos)
+
+		return valid_poses
+
+	def is_closer(self, curr_pos, new_pos, end_pos):
+		return self.dist.pairwise([[curr_pos[0], curr_pos[1]], [end_pos[0], end_pos[1]]])[0][1] > self.dist.pairwise([[new_pos[0], new_pos[1]], [end_pos[0], end_pos[1]]])[0][1]
 
 	def finished(self, curr_poses, end_coordinates):
-		# for 
+		off_count = 0
+		for key, value in curr_poses.items():
+			if end_coordinates[key][0] != value[0] and end_coordinates[key][1] != value[1]:
+				off_count += 1
+		
+		print("Off count: ", off_count)
+
+		if off_count > 0:
+			return False
+
 		return True
 
 
