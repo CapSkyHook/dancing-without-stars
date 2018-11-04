@@ -138,9 +138,18 @@ class Player:
 		print("Got end_coordinates")
 
 		# CURRENT THIS PLATEAUS AT 42 PEOPLE SO NEED TO DO A LITTLE MORE
-		move = self.route(self.dancers, end_coordinates, board)
-		import pdb; pdb.set_trace()
-		return move
+		moves = self.route(end_coordinates, board)
+		
+		for move in moves:
+			foo = set()
+			for dancerId, coord in move.items():
+				# import pdb; pdb.set_trace()
+				if coord not in foo:
+					foo.add(coord)
+				else:
+					import pdb; pdb.set_trace()
+		# import pdb; pdb.set_trace()
+		return moves
 
 
 	def place_clusters(self, clusters, stars, centers):
@@ -171,27 +180,32 @@ class Player:
 								best_positions[value[0]] = (self.dancers[value[0]][0], self.dancers[value[0]][1])
 							else:
 								best_positions[value[0]] = poses.pop()
-
+			if self.num_color != len(best_positions):
+				import pdb; pdb.set_trace()
 			for key, position in best_positions.items():
 				final_poses[key] = position
 				if key != center:
 					board[position[0]][position[1]] = key
+		if len(final_poses) != len(self.dancers):
+			import pdb; pdb.set_trace()
 		return final_poses, board
 
-	def route(self, dancers, end_coordinates, board):
+	def route(self, end_coordinates, board):
 		curr_poses = {}
 		moves = []
 		positions = {}
-		for dancerId, (x, y, colorType) in dancers.items():
+		for dancerId, (x, y, colorType) in self.dancers.items():
 			curr_poses[dancerId] = [x, y]
 			board[x][y] = dancerId
 		
 		# import pdb; pdb.set_trace()
 		turn_round = 0
-		while not self.finished(curr_poses, end_coordinates):
+		# import pdb; pdb.set_trace()
+		while not self.finished(curr_poses, end_coordinates) and turn_round < 100:
 			# import pdb; pdb.set_trace()
 			curr_turn_other_viable_moves = {}
 			moves_this_turn = {}
+			moves_used = set()
 			for dancerId in self.dancers.keys():
 				if dancerId in moves_this_turn: continue
 				curr_pos = curr_poses[dancerId]
@@ -199,11 +213,13 @@ class Player:
 					end_pos = end_coordinates[dancerId]
 				except Exception as e:
 					import pdb; pdb.set_trace()
-
+				if len(end_coordinates) != len(self.dancers):
+					import pdb; pdb.set_trace()
 				valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
 
 				for i in range(len(valid_moves)):
-					if board[valid_moves[i][0]][valid_moves[i][1]] == 0:
+					if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and valid_moves[i] not in moves_used:
+						moves_used.add(valid_moves[i])
 						board[curr_pos[0]][curr_pos[1]] = 0
 						board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
 						curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
@@ -212,8 +228,8 @@ class Player:
 						moves_this_turn[dancerId] = valid_moves.pop(i)
 						curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
 						break
-					
-			moves.append(moves_this_turn)
+			if moves_this_turn:	
+				moves.append(moves_this_turn)
 			turn_round += 1
 		return moves
 
@@ -232,9 +248,14 @@ class Player:
 
 	def finished(self, curr_poses, end_coordinates):
 		off_count = 0
+		if len(end_coordinates) != len(self.dancers):
+			import pdb; pdb.set_trace()
 		for key, value in curr_poses.items():
-			if end_coordinates[key][0] != value[0] and end_coordinates[key][1] != value[1]:
-				off_count += 1
+			try:
+				if end_coordinates[key][0] != value[0] and end_coordinates[key][1] != value[1]:
+					off_count += 1
+			except:
+				import pdb; pdb.set_trace()
 		
 		print("Off count: ", off_count)
 
@@ -389,7 +410,7 @@ def main():
 
 		moves = player.get_moves(stars)
 		for move in moves: # iterate through all the moves
-			print(move)
+			# print(move)
 			move_str = str(len(move))
 			for id in move: # for each dancer id in this move
 				x, y, color = __dancers[id]
