@@ -164,27 +164,32 @@ class Player:
 							if key == "distance": continue
 
 							if centerType == self.dancers[value[0]][2]:
-								# we might want to pass the id of the thing
 								best_positions[value[0]] = (self.dancers[value[0]][0], self.dancers[value[0]][1])
 							else:
 								best_positions[value[0]] = poses.pop()
 
-			final_poses[center] = best_positions
 			for key, position in best_positions.items():
+				final_poses[key] = position
 				if key != center:
 					board[position[0]][position[1]] = key
 		return final_poses, board
 
 	def route(self, dancers, end_coordinates, board):
 		curr_poses = {}
+		positions = {}
 		for dancerId, (x, y, colorType) in dancers.items():
 			curr_poses[dancerId] = [x, y]
 			board[x][y] = dancerId
 		
-		# STILL WORK IN PROGRESS. ROUTING PORTION
 		import pdb; pdb.set_trace()
 
+		while not self.finished(curr_poses, end_coordinates):
+			for dancerId, (x, y, colorType) in dancers.items():
+				pass
+
+	def finished(self, curr_poses, end_coordinates):
 		# for 
+		return True
 
 
 	def place_cluster(self, board, one_side, other_side, direction, center):
