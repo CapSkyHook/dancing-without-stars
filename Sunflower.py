@@ -178,7 +178,7 @@ class Player:
 					board[position[0]][position[1]] = key
 		return final_poses, board
 
-	def route(self, dancers, end_coordinates, board):
+	def route(self, dancers, end_coordinates, oriboard):
 		curr_poses = {}
 		moves = []
 		positions = {}
@@ -188,11 +188,14 @@ class Player:
 		
 		# import pdb; pdb.set_trace()
 		turn_round = 0
+		bfs = []
+		limit = maxiter #some number
 		while not self.finished(curr_poses, end_coordinates):
 			# import pdb; pdb.set_trace()
 			curr_turn_other_viable_moves = {}
 			moves_this_turn = {}
-			for dancerId in self.dancers.keys():
+			best_move = {}
+			'''for dancerId in self.dancers.keys():
 				if dancerId in moves_this_turn: continue
 				curr_pos = curr_poses[dancerId]
 				try:
@@ -211,10 +214,56 @@ class Player:
 						# dumb but this needs to come last because I am popping out the coordinate
 						moves_this_turn[dancerId] = valid_moves.pop(i)
 						curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
+						#bfs.append(valid_moves)
 						break
 					
 			moves.append(moves_this_turn)
-			turn_round += 1
+			turn_round += 1'''
+
+			it = 0
+			while it < int(len(self.dancers)/2):
+				#for move_this_turn, we try to start from different dancers, we could control the number of start point it
+				# reason for this is becasuse although we start from dancerid = 0 in each turn move, we still likely get a 
+				# move_this_turn less than len(self.dancer)
+				#this mainly wants to spend more time in move_this_turn
+				bfs = self.find_viable_moves(curr_poses[it], end_coordinates[it], board)
+
+    # incase dancer = it don't have availiable neighbor to move
+				while len(bfs) == 0 and it < len(self.dancers):
+					it += 1
+					bfs = self.find_viable_moves(curr_poses[it], end_coordinates[it], board)
+
+				while len(bfs) > 0:
+					board = oriboard
+					moves_this_turn[it] = bfs.pop()
+					for dancerId in range(it+1, int(len(self.dancers))):
+						curr_pos = curr_poses[dancerId]
+				 try:
+					 end_pos = end_coordinates[dancerId]
+				 except Exception as e:
+					 import pdb; pdb.set_trace()
+
+				 valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
+
+				 for i in range(len(valid_moves)):
+					 if board[valid_moves[i][0]][valid_moves[i][1]] == 0:
+						 board[curr_pos[0]][curr_pos[1]] = 0
+						 board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
+						 curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
+
+						# dumb but this needs to come last because I am popping out the coordinate
+						 moves_this_turn[dancerId] = valid_moves[i]
+						 #curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
+						#bfs.append(valid_moves)
+						#for one loop of move_this_turn, once we find a valid move for one dancer, we go to next(not sure here)
+						 break
+
+						if len(moves_this_turn) > len(best_move):
+							best_move = moves_this_turn
+
+					it += 1
+			 move.append(best_move)
+
 		return moves
 
 
