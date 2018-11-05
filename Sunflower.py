@@ -8,6 +8,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 from operator import itemgetter
 import collections
 import copy
+import time
 """
 python3 sample_player.py -H <host> -p <port> <-c|-s>
 """
@@ -100,6 +101,7 @@ class Player:
 		self.collectcolor()
 		dancers = self.dancers.copy()
 		print("I'm alive")
+
 		stars = self.adjPlaceStars(dancers)
 		'''x = -1
 		y = -1
@@ -141,6 +143,7 @@ class Player:
 		colors = [i for i in range(1, self.num_color+1)]
 		dx = [1,-1,0,0]
 		dy = [0,0,1,-1]
+		start_time = time.time()
 
 		candidates = []
 
@@ -184,7 +187,7 @@ class Player:
 		#print(len(stars))
 		#print(fail)
 
-		while len(stars) < numStars:
+		while len(stars) < numStars and time.time() - start_time < 115:
 			x = random.randint(self.left, self.right)
 			y = random.randint(self.bot, self.top)
 
@@ -505,19 +508,16 @@ class Player:
 		# If we can't place a cluster, place them anywhere
 		for cluster in positions_not_found:
 
-			poses = self.place_cluster_anywhere_close(board, self.dancers[center])
-
 			for dancerId, distance_deprecated in cluster.items():
-				if poses:
-					final_poses[key] = poses.pop()
-				else:
-					for i in range(self.board_size):
-						for j in range(self.board_size):
-							if (board[i][j] == 0 and 0 not in final_poses) or ((i, j) != final_poses[0]):
-								final_poses[key] = (i, j)
+				if dancerId == "distance": continue
+				key = self.dancers[dancerId][2]
+				for i in range(self.board_size):
+					for j in range(self.board_size):
+						if (board[i][j] == 0 and 0 not in final_poses) or ((i, j) != final_poses[0]):
+							final_poses[dancerId] = (i, j)
 
 				if key != center:
-					board[final_poses[key][0]][final_poses[key][1]] = key
+					board[final_poses[dancerId][0]][final_poses[dancerId][1]] = dancerId
 
 		return final_poses, board
 
@@ -551,7 +551,7 @@ class Player:
 		# import pdb; pdb.set_trace()
 		turn_round = 0
 		# import pdb; pdb.set_trace()
-		while not self.finished(curr_poses, end_coordinates) and turn_round < 100:
+		while not self.finished(curr_poses, end_coordinates) and turn_round < 60:
 			
 			# if self.getOffCount(curr_poses, end_coordinates) < 5:
 			# 	off_nodes = self.getOffNodes(curr_poses, end_coordinates)
@@ -611,7 +611,10 @@ class Player:
 						elif not other_dancer in curr_turn_other_viable_moves:
 							tmp_board = copy.deepcopy(board)
 							tmp_board[curr_pos[0]][curr_pos[1]] = 0
-							valid_moves_other = self.find_viable_moves(valid_moves[i], end_coordinates[other_dancer], tmp_board)
+							try:
+								valid_moves_other = self.find_viable_moves(valid_moves[i], end_coordinates[other_dancer], tmp_board)
+							except:
+								continue
 							for index in range(len(valid_moves_other)):
 								if index == len(valid_moves_other): continue
 								# try:
