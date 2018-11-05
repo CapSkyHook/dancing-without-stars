@@ -720,7 +720,7 @@ class Player:
 						moves_this_turn[dancerId] = valid_moves.pop(i)
 						curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
 						break
-					elif board[valid_moves[i][0]][valid_moves[i][1]] > 0 or valid_moves[i] in moves_used and valid_moves[i] = moves_this_turn[0]:
+					elif board[valid_moves[i][0]][valid_moves[i][1]] > 0 or valid_moves[i] in moves_used and valid_moves[i] == moves_this_turn[0]:
 						pass
 			if moves_this_turn: 
 				moves.append(moves_this_turn)
