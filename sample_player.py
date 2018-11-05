@@ -87,7 +87,7 @@ class Player:
 		#
 		dancers = self.dancers.copy()
 		stars = self.adjPlaceStars(dancers)
-		x = -1
+		'''x = -1
 		y = -1
 		occupied = set()
 		for id in self.dancers:
@@ -104,39 +104,64 @@ class Player:
 						break
 				if ok_to_add:
 					stars.append((x, y))
-					occupied.add((x, y))
+					occupied.add((x, y))'''
 		return stars
 
- def adjPlaceStars(self, dancers) {
-  int boardSize = self.board_size
-  int numDancers = len(dancers)
-  int numColors = client->serverNumColors;
-  int numStars = numDancers; // because the rule says so
+	def adjPlaceStars(self, dancers)
+		boardSize = self.board_size
+		numDancers = self.k
+		numColors = self.num_color
+		numStars = numDancers
 
-  vector<Point> stars; // stars is initially empty
-  GameState state(boardSize, numColors, client->dancers, stars, &t);
-  vector<PointScore> candidates = getAdjCandidates(state);
+		stars = []
+		candidates = self.getAdjCandidates()
 
-  int i = 0;
-  while (stars.size() < numStars && i < candidates.size()) {
-    Point candidateStar = candidates[i].point;
-    bool tooClose = false;
-    for (Point &star : stars) {
-      if (manDist(candidateStar, star) < numColors + 1) {
-        tooClose = true;
-        break;
-      }
-    }
-    if (!tooClose) {
-      stars.push_back(candidateStar);
-    }
-    i++;
-  }
+		i = 0
+		while len(stars) < numStars and i < candidates.size():
+			candidateStar = candidates[i]
+			tooClose = False
+			for star in stars:
+				if self.manDist(candidateStar, star) < numColors + 1:
+					tooClose = True
+					break
+    
+				if not tooClose:
+					stars.append(candidateStar)
 
-  return stars;
-}
+				i += 1
+
+		return stars
+
+	def getAdjCandidates(self)
+		candidates = []
+		self.fillboard(self.board)
+
+		for x in range(0, self.board_size):
+			for y in range(0, self.board_size):
+				if self.board[x][y] == False:
+					minManDist = 99999
+
+					for k,v in self.dancers.items():
+						currentManDist = self.manDist((x,y), (v[0], v[1]))
+						if currentManDist < minManDist:
+							currentManDist = minManDist 
+							candidates.append((x, y, minManDist))
+
+		candidates.sort(key=lambda x: x[2])
+
+		return candidates
+
+		def manDist(self, p1, p2):
+			return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+      
 	# TODO add your method here
 	# Add your moves as a choreographer
+
+	def fillboard(self):
+		for k, v in self.dancers:
+			self.board[v[0]][v[1]] = True
+
+
 	def get_moves(self, stars):
 		#
 		#

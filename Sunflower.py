@@ -82,6 +82,7 @@ class Player:
         self.dancers = dancers
         self.dist = DistanceMetric.get_metric('manhattan')
         self.directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        self.board = [[False for i in range(0, self.board_size)] for j in range(0, self.board_size)]
         # arr_patients = [ [patient[0], patient[1]] for dancier in self.danciers.values()]
 
         # D = pairwise_distances(arr_patients, metric='manhattan')
