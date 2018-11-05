@@ -36,7 +36,7 @@ def get_args():
 	##########################################
 	#PLEASE ADD YOUR TEAM NAME#
 	##########################################
-	name = "Sample_Player"
+	name = "Sunflower"
 	##########################################
 	#PLEASE ADD YOUR TEAM NAME#
 	##########################################
@@ -438,9 +438,9 @@ class Player:
 		#
 		#
 		clusters, centers = self.get_clusters(stars)
-		print("Got clusters")
+		# print("Got clusters")
 		end_coordinates, board = self.place_clusters(clusters, stars, centers)
-		print("Got end_coordinates")
+		# print("Got end_coordinates")
 
 		# CURRENT THIS PLATEAUS AT 42 PEOPLE SO NEED TO DO A LITTLE MORE
 		moves = self.route(end_coordinates, board)
@@ -452,8 +452,8 @@ class Player:
 				if coord not in foo:
 					foo.add(coord)
 				else:
-					# pass
-					import pdb; pdb.set_trace()
+					pass
+					# import pdb; pdb.set_trace()
 			roundT += 1
 		# import pdb; pdb.set_trace()
 		return moves
@@ -498,8 +498,8 @@ class Player:
 				final_poses[key] = position
 				if key != center:
 					board[position[0]][position[1]] = key
-		if len(final_poses) != len(self.dancers):
-			import pdb; pdb.set_trace()
+		# if len(final_poses) != len(self.dancers):
+		# 	import pdb; pdb.set_trace()
 
 
 		# If we can't place a cluster, place them anywhere
@@ -508,29 +508,36 @@ class Player:
 			poses = self.place_cluster_anywhere_close(board, self.dancers[center])
 
 			for dancerId, distance_deprecated in cluster.items():
-				final_poses[key] = poses.pop()
+				if poses:
+					final_poses[key] = poses.pop()
+				else:
+					for i in range(self.board_size):
+						for j in range(self.board_size):
+							if (board[i][j] == 0 and 0 not in final_poses) or ((i, j) != final_poses[0]):
+								final_poses[key] = (i, j)
+
 				if key != center:
 					board[final_poses[key][0]][final_poses[key][1]] = key
 
 		return final_poses, board
 
 
-	def place_cluster_anywhere_close(board, center):
-		visited, queue = set(), collections.deque([center])
-		while queue: 
-			vertex = queue.popleft()
-			for coord in [(vertex[0] + x, vertex[1] + y) for x, y in self.directions]: 
-				if coord not in visited and board[coord[0]][coord[1]] == 0:
-					for direction in range(2):
-						for one_side in range(self.num_color):
-							other_side = self.num_color - 1 - one_side 
-							valid_pos, poses = self.place_cluster(board, one_side, other_side, direction, center)
-							if valid_pos:
-								return poses
-					visited.add(neighbour) 
-					queue.append(neighbour) 
-		import pdb; pdb.set_trace()
-		return []
+	# def place_cluster_anywhere_close(self, board, center):
+		# visited, queue = set(), collections.deque([center])
+		# while queue: 
+		# 	vertex = queue.popleft()
+		# 	for coord in [(vertex[0] + x, vertex[1] + y) for x, y in self.directions]: 
+		# 		if coord not in visited and board[coord[0]][coord[1]] == 0:
+		# 			for direction in range(2):
+		# 				for one_side in range(self.num_color):
+		# 					other_side = self.num_color - 1 - one_side 
+		# 					valid_pos, poses = self.place_cluster(board, one_side, other_side, direction, center)
+		# 					if valid_pos:
+		# 						return poses
+		# 			visited.add(neighbour) 
+		# 			queue.append(neighbour) 
+		# # import pdb; pdb.set_trace()
+		# return []
 
 
 	def route(self, end_coordinates, board):
@@ -561,17 +568,18 @@ class Player:
 				try:
 					end_pos = end_coordinates[dancerId]
 				except Exception as e:
-					import pdb; pdb.set_trace()
-				if len(end_coordinates) != len(self.dancers):
-					import pdb; pdb.set_trace()
+					pass
+					# import pdb; pdb.set_trace()
+				# if len(end_coordinates) != len(self.dancers):
+				# 	import pdb; pdb.set_trace()
 				valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
 				for i in range(len(valid_moves)):
 					if i == len(valid_moves): continue
 					# if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and (0 in moves_this_turn and valid_moves[i] != moves_this_turn[0]) and valid_moves[i] in moves_used:
 					# 	import pdb; pdb.set_trace()
 					if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and valid_moves[i] not in moves_used:
-						if valid_moves[i] in moves_used:
-							import pdb; pdb.set_trace()
+						# if valid_moves[i] in moves_used:
+						# 	import pdb; pdb.set_trace()
 						moves_used.add(valid_moves[i])
 						board[curr_pos[0]][curr_pos[1]] = 0
 						board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
@@ -585,16 +593,16 @@ class Player:
 						# try:
 						other_dancer = board[valid_moves[i][0]][valid_moves[i][1]]
 						if other_dancer in curr_turn_other_viable_moves and curr_pos in curr_turn_other_viable_moves[other_dancer]:
-							if curr_pos in moves_used:
-								import pdb; pdb.set_trace()
+							# if curr_pos in moves_used:
+							# 	import pdb; pdb.set_trace()
 							moves_used.add(curr_pos)
 							board[curr_pos[0]][curr_pos[1]] = other_dancer
 						
 							curr_poses[other_dancer] = [curr_pos[0], curr_pos[1]]
 							moves_this_turn[other_dancer] = curr_pos 
 
-							if valid_moves[i] in moves_used:
-								import pdb; pdb.set_trace()
+							# if valid_moves[i] in moves_used:
+							# 	import pdb; pdb.set_trace()
 							moves_used.add(valid_moves[i])
 							board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
 							curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
@@ -612,8 +620,8 @@ class Player:
 								if valid_moves_other[index] == curr_pos or (valid_moves_other[index] not in moves_used and board[valid_moves_other[index][0]][valid_moves_other[index][1]] == 0):
 								# if (board[valid_moves_other[i][0]][valid_moves_other[i][1]] == 0 and valid_moves_other[i] not in moves_used):
 
-									if valid_moves_other[index] in moves_used:
-										import pdb; pdb.set_trace()
+									# if valid_moves_other[index] in moves_used:
+									# 	import pdb; pdb.set_trace()
 									moves_used.add(valid_moves_other[index])
 									board[valid_moves_other[index][0]][valid_moves_other[index][1]] = other_dancer
 								
@@ -622,8 +630,8 @@ class Player:
 									curr_turn_other_viable_moves[other_dancer] = valid_moves_other 
 									board[curr_pos[0]][curr_pos[1]] = 0
 
-									if valid_moves[i] in moves_used:
-										import pdb; pdb.set_trace()
+									# if valid_moves[i] in moves_used:
+									# 	import pdb; pdb.set_trace()
 									moves_used.add(valid_moves[i])
 									board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
 									curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
@@ -660,14 +668,15 @@ class Player:
 
 	def finished(self, curr_poses, end_coordinates):
 		off_count = 0
-		if len(end_coordinates) != len(self.dancers):
-			import pdb; pdb.set_trace()
+		# if len(end_coordinates) != len(self.dancers):
+		# 	import pdb; pdb.set_trace()
 		for key, value in curr_poses.items():
 			try:
 				if end_coordinates[key][0] != value[0] and end_coordinates[key][1] != value[1]:
 					off_count += 1
 			except:
-				import pdb; pdb.set_trace()
+				pass
+				# import pdb; pdb.set_trace()
 		
 		# print("Off count: ", off_count)
 
@@ -678,14 +687,15 @@ class Player:
 
 	def getOffCount(self, curr_poses, end_coordinates):
 		off_count = 0
-		if len(end_coordinates) != len(self.dancers):
-			import pdb; pdb.set_trace()
+		# if len(end_coordinates) != len(self.dancers):
+		# 	import pdb; pdb.set_trace()
 		for key, value in curr_poses.items():
 			try:
 				if end_coordinates[key][0] != value[0] and end_coordinates[key][1] != value[1]:
 					off_count += 1
 			except:
-				import pdb; pdb.set_trace()
+				pass
+				# import pdb; pdb.set_trace()
 
 		if off_count > 0:
 			return off_count
@@ -694,14 +704,15 @@ class Player:
 
 	def getOffNodes(self, curr_poses, end_coordinates):
 		off_nodes = []
-		if len(end_coordinates) != len(self.dancers):
-			import pdb; pdb.set_trace()
+		# if len(end_coordinates) != len(self.dancers):
+		# 	import pdb; pdb.set_trace()
 		for key, value in curr_poses.items():
 			try:
 				if end_coordinates[key][0] != value[0] and end_coordinates[key][1] != value[1]:
 					off_nodes.append(key)
 			except:
-				import pdb; pdb.set_trace()
+				pass
+				# import pdb; pdb.set_trace()
 
 		return off_nodes
 
