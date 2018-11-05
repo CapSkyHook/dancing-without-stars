@@ -3,7 +3,6 @@ import sys, random
 from copy import deepcopy
 from client import Client
 from getopt import getopt, GetoptError
-import heapq 
 from sklearn.neighbors import DistanceMetric
 from sklearn.metrics.pairwise import pairwise_distances
 from operator import itemgetter
@@ -86,6 +85,8 @@ class Player:
 		self.right = -1
 		self.top = -1
 		self.bot = 9999
+       self.dist = DistanceMetric.get_metric('manhattan')
+        self.directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 	# TODO add your method here
 	# Add your stars as a spoiler
@@ -493,9 +494,84 @@ class Player:
     # TODO add your method here
     # Add your stars as a spoiler
 
-    # TODO add your method here
-    # Add your moves as a choreographer
+    def collectcolor(self):
+        for color in range(1, self.num_color+1):
+            self.dancersbycolor[color] = []
 
+        for k,v in self.dancers.items():
+            self.board[v[0]][v[1]] = True
+            self.left = min(self.left, v[0])
+            self.right = max(self.right, v[0])
+            self.top = max(self.top, v[1])
+            self.bot = min(self.bot, v[1])
+            self.dancersbycolor[v[2]].append([k, v])
+
+    def adjPlaceStars(self, dancers):
+        boardSize = self.board_size
+        numDancers = self.k
+        numColors = self.num_color
+        numStars = numDancers
+        colors = [i for i in range(1, self.num_color+1)]
+        dx = [1,-1,0,0]
+        dy = [0,0,1,-1]
+
+        candidates = []
+
+        while len(colors) > 0:
+            start = random.choice(colors)
+            colors.remove(start)
+
+            for v in self.dancersbycolor[start]:
+                for direc in range(0,4):
+                    nx = v[1][0]+dx[direc]
+                    ny = v[1][1]+dy[direc]
+                    if nx >= self.board_size or ny >= self.board_size or nx < 0 or ny < 0:
+                        continue
+
+                    if self.board[nx][ny] == True:
+                        continue
+                    candidates.append([nx, ny])
+                    #print(len(candidates))
+        
+        fail = 0
+        #print(candidates)
+
+        stars = []
+        while len(stars) < numStars and len(candidates) > 0:
+            point = candidates[0]
+            print(point)
+            candidates.pop(0)
+
+            tooClose = False
+
+            for star in stars:
+                if self.manDist(point, star) < numColors + 1:
+                    tooClose = True
+                    fail += 1
+                    break
+
+            if not tooClose:
+                print("add one point")
+                stars.append(point)
+
+        #print(len(stars))
+        #print(fail)
+
+        while len(stars) < numStars:
+            x = random.randint(self.left, self.right)
+            y = random.randint(self.bot, self.top)
+
+            point = [x,y]
+            for star in stars:
+                if self.manDist(point, star) < numColors + 1:
+                    tooClose = True
+                    break
+
+                if not tooClose:
+                    stars.append(point)
+
+        return stars
+    
     def return_and_delete_middle_elem(self, arr):
         mid_point = len(arr) // 2
         return_elem = arr[mid_point]
@@ -563,8 +639,8 @@ class Player:
             if not found_one:
                 positions_not_found.append(cluster)
 
-            # if (self.num_color != len(best_positions) and len(best_positions) > 0 ) or not found_one:
-            #     import pdb; pdb.set_trace()
+            if (self.num_color != len(best_positions) and len(best_positions) > 0 ) or not found_one:
+                import pdb; pdb.set_trace()
             for key, position in best_positions.items():
                 final_poses[key] = position
                 if key != center:
@@ -610,7 +686,7 @@ class Player:
         positions = {}
         for dancerId, (x, y, colorType) in self.dancers.items():
             curr_poses[dancerId] = [x, y]
-            board[x][y] = 1
+            board[x][y] = dancerId
         
         # import pdb; pdb.set_trace()
         turn_round = 0
@@ -637,7 +713,7 @@ class Player:
                     if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and valid_moves[i] not in moves_used:
                         moves_used.add(valid_moves[i])
                         board[curr_pos[0]][curr_pos[1]] = 0
-                        board[valid_moves[i][0]][valid_moves[i][1]] = 1
+                        board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
                         curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
 
                         # dumb but this needs to come last because I am popping out the coordinate
@@ -830,7 +906,7 @@ def main():
                 x, y, color = __dancers[id]
                 nx, ny = move[id]
                 move_str += " " + str(x) + " " + str(y) + " " + str(nx) + " " + str(ny)
-                __dancers[dancer_id] = (nx, ny, color)
+                __dancers[id] = (nx, ny, color)
 
             client.send(move_str)
 
@@ -863,7 +939,7 @@ def getLines(num_color, dancers):
                     cnt += 1
                     dir = i
             if cnt == 0:
-                return [[0, 0, 0, 0]]
+                return "0 0 0 0"
             elif cnt == 1:
                 nx = x + dx[dir]*(num_color-1)
                 ny = y + dy[dir]*(num_color-1)
@@ -891,6 +967,8 @@ def getLines(num_color, dancers):
             break
         for x,y in removing:
             del nonvis[(x,y)]
+    if len(lines) == 0:
+        return "0 0 0 0"
     res = ""
     for line in lines:
         for coor in line:
