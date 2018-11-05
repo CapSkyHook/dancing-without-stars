@@ -7,7 +7,7 @@ from sklearn.neighbors import DistanceMetric
 from sklearn.metrics.pairwise import pairwise_distances
 from operator import itemgetter
 import collections
-
+import copy
 """
 python3 sample_player.py -H <host> -p <port> <-c|-s>
 """
@@ -593,7 +593,7 @@ class Player:
 
 		# CURRENT THIS PLATEAUS AT 42 PEOPLE SO NEED TO DO A LITTLE MORE
 		moves = self.route(end_coordinates, board)
-		
+		roundT = 0
 		for move in moves:
 			foo = set()
 			for dancerId, coord in move.items():
@@ -602,6 +602,7 @@ class Player:
 					foo.add(coord)
 				else:
 					import pdb; pdb.set_trace()
+			roundT += 1
 		# import pdb; pdb.set_trace()
 		return moves
 
@@ -691,7 +692,7 @@ class Player:
 		# import pdb; pdb.set_trace()
 		turn_round = 0
 		# import pdb; pdb.set_trace()
-		while not self.finished(curr_poses, end_coordinates) and turn_round < 100:
+		while not self.finished(curr_poses, end_coordinates) and turn_round < 200:
 			# import pdb; pdb.set_trace()
 			curr_turn_other_viable_moves = {}
 			moves_this_turn = {}
@@ -706,10 +707,10 @@ class Player:
 				if len(end_coordinates) != len(self.dancers):
 					import pdb; pdb.set_trace()
 				valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
-
 				for i in range(len(valid_moves)):
-					if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and (0 in moves_this_turn and valid_moves[i] != moves_this_turn[0]) and valid_moves[i] in moves_used:
-						import pdb; pdb.set_trace()
+					if i == len(valid_moves): continue
+					# if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and (0 in moves_this_turn and valid_moves[i] != moves_this_turn[0]) and valid_moves[i] in moves_used:
+					# 	import pdb; pdb.set_trace()
 					if board[valid_moves[i][0]][valid_moves[i][1]] == 0 and valid_moves[i] not in moves_used:
 						moves_used.add(valid_moves[i])
 						board[curr_pos[0]][curr_pos[1]] = 0
@@ -720,8 +721,54 @@ class Player:
 						moves_this_turn[dancerId] = valid_moves.pop(i)
 						curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
 						break
-					elif board[valid_moves[i][0]][valid_moves[i][1]] > 0 or valid_moves[i] in moves_used and valid_moves[i] == moves_this_turn[0]:
-						pass
+					elif board[valid_moves[i][0]][valid_moves[i][1]] > 0 or valid_moves[i] in moves_used and 0 in moves_this_turn and valid_moves[i] == moves_this_turn[0]:
+						# try:
+						other_dancer = board[valid_moves[i][0]][valid_moves[i][1]]
+						if other_dancer in curr_turn_other_viable_moves and curr_pos in curr_turn_other_viable_moves[other_dancer]:
+
+							moves_used.add(curr_pos)
+							board[curr_pos[0]][curr_pos[1]] = other_dancer
+						
+							curr_poses[other_dancer] = [curr_pos[0], curr_pos[1]]
+							moves_this_turn[other_dancer] = curr_pos 
+
+							# dumb but this needs to come last because I am popping out the coordinate
+							moves_used.add(valid_moves[i])
+							board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
+							curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
+							moves_this_turn[dancerId] = valid_moves.pop(i)
+							curr_turn_other_viable_moves[dancerId] = valid_moves 
+						elif not other_dancer in curr_turn_other_viable_moves:
+							tmp_board = copy.deepcopy(board)
+							tmp_board[curr_pos[0]][curr_pos[1]] = 0
+							valid_moves_other = self.find_viable_moves(valid_moves[i], end_coordinates[other_dancer], tmp_board)
+							for index in range(len(valid_moves_other)):
+								if index == len(valid_moves_other): continue
+								try:
+									if valid_moves_other[index] == valid_moves_other[index] or (0 in moves_this_turn and board[valid_moves_other[index][0]][valid_moves_other[index][1]] == 0 and valid_moves[i] not in moves_used):
+										moves_used.add(valid_moves_other[index])
+										board[valid_moves_other[index][0]][valid_moves_other[index][1]] = other_dancer
+									
+										curr_poses[other_dancer] = [valid_moves_other[index][0], valid_moves_other[index][1]]
+										moves_this_turn[other_dancer] = valid_moves_other.pop(index)
+										curr_turn_other_viable_moves[other_dancer] = valid_moves_other 
+
+										# dumb but this needs to come last because I am popping out the coordinate
+										moves_used.add(valid_moves[i])
+										board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
+										curr_poses[dancerId] = [valid_moves[i][0], valid_moves[i][1]]
+										moves_this_turn[dancerId] = valid_moves.pop(i)
+										curr_turn_other_viable_moves[dancerId] = valid_moves # keep this for later when we do tiebreaking
+								
+
+
+
+								except:
+									import pdb; pdb.set_trace()
+							# for move in curr_turn_other_viable_moves[board[valid_moves[i][0]][valid_moves[i][1]]]:
+
+
+
 			if moves_this_turn: 
 				moves.append(moves_this_turn)
 			turn_round += 1
