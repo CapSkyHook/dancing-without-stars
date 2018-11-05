@@ -13,81 +13,80 @@ import collections
 python3 sample_player.py -H <host> -p <port> <-c|-s>
 """
 def process_file(file_data):
-    """read in input file"""
-    dancers = {}
-    dancer_id = -1
-    f = file_data.split("\n")
-    for line in f:
-        print(line)
-        tokens = line.split()
-        if len(tokens) == 2:
-            dancer_id+=1
-            dancers[dancer_id] = (int(tokens[0]), int(tokens[1]), latest_color)
-        elif len(tokens)>2:
-            latest_color = int(tokens[-1])
-    return dancers
+	"""read in input file"""
+	dancers = {}
+	dancer_id = -1
+	f = file_data.split("\n")
+	for line in f:
+		print(line)
+		tokens = line.split()
+		if len(tokens) == 2:
+			dancer_id+=1
+			dancers[dancer_id] = (int(tokens[0]), int(tokens[1]), latest_color)
+		elif len(tokens)>2:
+			latest_color = int(tokens[-1])
+	return dancers
 
 def print_usage():
-    print("Usage: python3 sample_player.py -H <host> -p <port> [-c/-s]")
+	print("Usage: python3 sample_player.py -H <host> -p <port> [-c/-s]")
 
 def get_args():
-    host = None
-    port = None
-    player = None
-    ##########################################
-    #PLEASE ADD YOUR TEAM NAME#
-    ##########################################
-    name = "Sunflower"
-    ##########################################
-    #PLEASE ADD YOUR TEAM NAME#
-    ##########################################
-    try:
-        opts, args = getopt(sys.argv[1:], "hcsH:p:", ["help"])
-    except GetoptError:
-        print_usage()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            print_usage()
-            sys.exit()
-        elif opt == "-H":
-            host = arg
-        elif opt == "-p":
-            port = int(arg)
-        elif opt == "-c":
-            player = "c"
-        elif opt == "-s":
-            player = "s"
-    if host is None or port is None or player is None:
-        print_usage()
-        sys.exit(2)
-    return host, port, player, name
+	host = None
+	port = None
+	player = None
+	##########################################
+	#PLEASE ADD YOUR TEAM NAME#
+	##########################################
+	name = "Sample_Player"
+	##########################################
+	#PLEASE ADD YOUR TEAM NAME#
+	##########################################
+	try:
+		opts, args = getopt(sys.argv[1:], "hcsH:p:", ["help"])
+	except GetoptError:
+		print_usage()
+		sys.exit(2)
+	for opt, arg in opts:
+		if opt in ("-h", "--help"):
+			print_usage()
+			sys.exit()
+		elif opt == "-H":
+			host = arg
+		elif opt == "-p":
+			port = int(arg)
+		elif opt == "-c":
+			player = "c"
+		elif opt == "-s":
+			player = "s"
+	if host is None or port is None or player is None:
+		print_usage()
+		sys.exit(2)
+	return host, port, player, name
 
 def get_buffer_stars(stars):
-    stars_str = ""
-    for s in stars:
-        stars_str += (str(s[0]) + " " + str(s[1]) + " ")
-    return stars_str
+	stars_str = ""
+	for s in stars:
+		stars_str += (str(s[0]) + " " + str(s[1]) + " ")
+	return stars_str
 
 class Player:
-    def __init__(self, board_size, num_color, k, dancers):
-        self.board_size = board_size
-        self.num_color = num_color
-        # k dancers for each color
-        self.k = k
-        # self.dancers is a dictionary with key as the id of the dancers
-        # with value as the tuple of 3 (x, y, c)
-        # where (x,y) is initial position of dancer
-        # c is the color id of the dancer
-        self.dancers = dancers
-        self.dist = DistanceMetric.get_metric('manhattan')
-        self.directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        self.board = [[False for i in range(0, self.board_size)] for j in range(0, self.board_size)]
-        # arr_patients = [ [patient[0], patient[1]] for dancier in self.danciers.values()]
+	def __init__(self, board_size, num_color, k, dancers):
+		self.board_size = board_size
+		self.num_color = num_color
+		# k dancers for each color
+		self.k = k
+		# self.dancers is a dictionary with key as the id of the dancers
+		# with value as the tuple of 3 (x, y, c)
+		# where (x,y) is initial position of dancer
+		# c is the color id of the dancer
+		self.dancers = dancers
+		self.board = [[False for i in range(self.board_size)] for j in range(self.board_size)]
+		self.dancersbycolor = {}
+		self.left = 9999
+		self.right = -1
+		self.top = -1
+		self.bot = 9999
 
-        # D = pairwise_distances(arr_patients, metric='manhattan')
-
-<<<<<<< HEAD
 	# TODO add your method here
 	# Add your stars as a spoiler
 	def get_stars(self):
@@ -97,8 +96,11 @@ class Player:
 		# Each coordinate is a tuple of 2 values (x, y)
 		#
 		#
-		stars = []
-		x = -1
+		self.collectcolor()
+		dancers = self.dancers.copy()
+		print("I'm alive")
+		stars = self.adjPlaceStars(dancers)
+		'''x = -1
 		y = -1
 		occupied = set()
 		for id in self.dancers:
@@ -115,8 +117,96 @@ class Player:
 						break
 				if ok_to_add:
 					stars.append((x, y))
-					occupied.add((x, y))
+					occupied.add((x, y))'''
 		return stars
+
+	def collectcolor(self):
+		for color in range(1, self.num_color+1):
+			self.dancersbycolor[color] = []
+
+		for k,v in self.dancers.items():
+			self.board[v[0]][v[1]] = True
+			self.left = min(self.left, v[0])
+			self.right = max(self.right, v[0])
+			self.top = max(self.top, v[1])
+			self.bot = min(self.bot, v[1])
+			self.dancersbycolor[v[2]].append([k, v])
+
+	def adjPlaceStars(self, dancers):
+		boardSize = self.board_size
+		numDancers = self.k
+		numColors = self.num_color
+		numStars = numDancers
+		colors = [i for i in range(1, self.num_color+1)]
+		dx = [1,-1,0,0]
+		dy = [0,0,1,-1]
+
+		candidates = []
+
+		while len(colors) > 0:
+			start = random.choice(colors)
+			colors.remove(start)
+
+			for v in self.dancersbycolor[start]:
+				for direc in range(0,4):
+					nx = v[1][0]+dx[direc]
+					ny = v[1][1]+dy[direc]
+					if nx > self.board_size or ny > self.board_size or nx < 0 or ny < 0:
+						continue
+
+					if self.board[nx][ny] == True:
+						continue
+					candidates.append([nx, ny])
+					#print(len(candidates))
+		
+		fail = 0
+		#print(candidates)
+
+		stars = []
+		while len(stars) < numStars and len(candidates) > 0:
+			point = candidates[0]
+			print(point)
+			candidates.pop(0)
+
+			tooClose = False
+
+			for star in stars:
+				if self.manDist(point, star) < numColors + 1:
+					tooClose = True
+					fail += 1
+					break
+
+			if not tooClose:
+				print("add one point")
+				stars.append(point)
+
+		#print(len(stars))
+		#print(fail)
+
+		while len(stars) < numStars:
+			x = random.randint(self.left, self.right)
+			y = random.randint(self.bot, self.top)
+
+			point = [x,y]
+			for star in stars:
+				if self.manDist(point, star) < numColors + 1:
+					tooClose = True
+					break
+
+				if not tooClose:
+					stars.append(point)
+
+		return stars
+
+	def manDist(self, p1, p2):
+		return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+      
+	# TODO add your method here
+	# Add your moves as a choreographer
+
+	def fillboard(self, board):
+		for k, v in self.dancers.items():
+			board[v[0]][v[1]] = True
 
 	# TODO add your method here
 	# Add your moves as a choreographer
@@ -242,14 +332,10 @@ class Player:
 					for dancerId in range(it+1, int(len(self.dancers))):
 						curr_pos = curr_poses[dancerId]
 						end_pos = end_coordinates[dancerId]
-				  '''try:
-					  end_pos = end_coordinates[dancerId]
-				  except Exception as e:
-					  import pdb; pdb.set_trace()'''
+				
+						valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
 
-					valid_moves = self.find_viable_moves(curr_pos, end_pos, board)
-
-						for i in range(len(valid_moves)):
+						for i in range(0,len(valid_moves)):
 							if board[valid_moves[i][0]][valid_moves[i][1]] == 0:
 								board[curr_pos[0]][curr_pos[1]] = 0
 								board[valid_moves[i][0]][valid_moves[i][1]] = dancerId
@@ -404,36 +490,8 @@ class Player:
 			if color == centerType:
 				board[x][y] = -2 
 		return board
-=======
     # TODO add your method here
     # Add your stars as a spoiler
-    def get_stars(self):
-        #
-        #
-        # You need to return a list of coordinates representing stars
-        # Each coordinate is a tuple of 2 values (x, y)
-        #
-        #
-        stars = []
-        x = -1
-        y = -1
-        occupied = set()
-        for id in self.dancers:
-            occupied.add((self.dancers[id][0], self.dancers[id][1]))
-        while len(stars) < self.k:
-            x = random.randint(0, self.board_size - 1)
-            y = random.randint(0, self.board_size - 1)
-            if (x, y) not in occupied:
-                # check manhattan distance with other stars
-                ok_to_add = True
-                for s in stars:
-                    if abs(x - s[0]) + abs(y - s[1]) < self.num_color + 1:
-                        ok_to_add = False
-                        break
-                if ok_to_add:
-                    stars.append((x, y))
-                    occupied.add((x, y))
-        return stars
 
     # TODO add your method here
     # Add your moves as a choreographer
@@ -730,8 +788,6 @@ class Player:
             if color == centerType:
                 board[x][y] = -2 
         return board
->>>>>>> 4877cddf0ed42aa28d53ebcf64bcad717d657b8d
-
 
 
 def main():

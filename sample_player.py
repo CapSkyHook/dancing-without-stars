@@ -75,6 +75,12 @@ class Player:
 		# where (x,y) is initial position of dancer
 		# c is the color id of the dancer
 		self.dancers = dancers
+		self.board = [[False for i in range(self.board_size)] for j in range(self.board_size)]
+		self.dancersbycolor = {}
+		self.left = 9999
+		self.right = -1
+		self.top = -1
+		self.bot = 9999
 
 	# TODO add your method here
 	# Add your stars as a spoiler
@@ -85,7 +91,9 @@ class Player:
 		# Each coordinate is a tuple of 2 values (x, y)
 		#
 		#
+		self.collectcolor()
 		dancers = self.dancers.copy()
+		print("I'm alive")
 		stars = self.adjPlaceStars(dancers)
 		'''x = -1
 		y = -1
@@ -107,59 +115,93 @@ class Player:
 					occupied.add((x, y))'''
 		return stars
 
-	def adjPlaceStars(self, dancers)
+	def collectcolor(self):
+		for color in range(1, self.num_color+1):
+			self.dancersbycolor[color] = []
+
+		for k,v in self.dancers.items():
+			self.board[v[0]][v[1]] = True
+			self.left = min(self.left, v[0])
+			self.right = max(self.right, v[0])
+			self.top = max(self.top, v[1])
+			self.bot = min(self.bot, v[1])
+			self.dancersbycolor[v[2]].append([k, v])
+
+	def adjPlaceStars(self, dancers):
 		boardSize = self.board_size
 		numDancers = self.k
 		numColors = self.num_color
 		numStars = numDancers
+		colors = [i for i in range(1, self.num_color+1)]
+		dx = [1,-1,0,0]
+		dy = [0,0,1,-1]
+
+		candidates = []
+
+		while len(colors) > 0:
+			start = random.choice(colors)
+			colors.remove(start)
+
+			for v in self.dancersbycolor[start]:
+				for direc in range(0,4):
+					nx = v[1][0]+dx[direc]
+					ny = v[1][1]+dy[direc]
+					if nx > self.board_size or ny > self.board_size or nx < 0 or ny < 0:
+						continue
+
+					if self.board[nx][ny] == True:
+						continue
+					candidates.append([nx, ny])
+					#print(len(candidates))
+		
+		fail = 0
+		#print(candidates)
 
 		stars = []
-		candidates = self.getAdjCandidates()
+		while len(stars) < numStars and len(candidates) > 0:
+			point = candidates[0]
+			print(point)
+			candidates.pop(0)
 
-		i = 0
-		while len(stars) < numStars and i < candidates.size():
-			candidateStar = candidates[i]
 			tooClose = False
+
 			for star in stars:
-				if self.manDist(candidateStar, star) < numColors + 1:
+				if self.manDist(point, star) < numColors + 1:
+					tooClose = True
+					fail += 1
+					break
+
+			if not tooClose:
+				print("add one point")
+				stars.append(point)
+
+		#print(len(stars))
+		#print(fail)
+
+		while len(stars) < numStars:
+			x = random.randint(self.left, self.right)
+			y = random.randint(self.bot, self.top)
+
+			point = [x,y]
+			for star in stars:
+				if self.manDist(point, star) < numColors + 1:
 					tooClose = True
 					break
-    
-				if not tooClose:
-					stars.append(candidateStar)
 
-				i += 1
+				if not tooClose:
+					stars.append(point)
 
 		return stars
 
-	def getAdjCandidates(self)
-		candidates = []
-		self.fillboard(self.board)
-
-		for x in range(0, self.board_size):
-			for y in range(0, self.board_size):
-				if self.board[x][y] == False:
-					minManDist = 99999
-
-					for k,v in self.dancers.items():
-						currentManDist = self.manDist((x,y), (v[0], v[1]))
-						if currentManDist < minManDist:
-							currentManDist = minManDist 
-							candidates.append((x, y, minManDist))
-
-		candidates.sort(key=lambda x: x[2])
-
-		return candidates
-
-		def manDist(self, p1, p2):
-			return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+	def manDist(self, p1, p2):
+		return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
       
 	# TODO add your method here
 	# Add your moves as a choreographer
 
-	def fillboard(self):
-		for k, v in self.dancers:
-			self.board[v[0]][v[1]] = True
+	def fillboard(self, board):
+		for k, v in self.dancers.items():
+			board[v[0]][v[1]] = True
 
 
 	def get_moves(self, stars):
